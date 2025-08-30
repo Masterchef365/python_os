@@ -17,13 +17,6 @@ ps2 = "0.2.0"
 
 linked_list_allocator = "0.10.5"
 
-egui = { version = "0.32.0", default-features = false }
-egui-euc = { git = "https://github.com/Masterchef365/egui-euc.git", branch = "no_std", default-features = false }
-#egui-euc = { path = "../egui-euc", default-features = false }
-euc = { git = "https://github.com/zesterer/euc.git", rev = "e8f7aee", default-features = false, features = ["micromath"] }
-#epaint = { path = "../egui/crates/epaint" }
-#emath = { path = "../egui/crates/emath" }
-
 [profile.dev]
 panic = "abort"
 
@@ -48,7 +41,3 @@ physical-memory-offset = "0xFFFF800000000000"
 # The address at which the bootinfo struct will be placed. if not provided,
 # the bootloader will dynamically search for a location.
 boot-info-address = "0xFFFFFFFF80000000"
-
-[patch.crates-io]
-#egui = { path = "../egui/crates/egui" }
-egui = { git = "https://github.com/Masterchef365/egui.git", branch = "no_std" }

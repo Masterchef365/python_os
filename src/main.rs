@@ -3,7 +3,6 @@
 
 extern crate alloc;
 
-use egui::Slider;
 use linked_list_allocator::LockedHeap;
 
 #[global_allocator]
@@ -11,7 +10,7 @@ static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 use core::panic::PanicInfo;
 use ps2::{error::ControllerError, flags::ControllerConfigFlags, Controller};
-use vga::writers::{Graphics320x240x256, GraphicsWriter};
+use vga::writers::{Graphics320x240x256, GraphicsWriter, Text80x25, TextWriter};
 
 pub fn init_heap() {
     //pub const HEAP_START: usize = 0x_4444_4444_0000;
@@ -55,6 +54,7 @@ pub extern "C" fn _start() -> ! {
     init_heap();
 
     
+    /*
     {
         let mode = Graphics320x240x256::new();
         mode.set_mode();
@@ -68,11 +68,10 @@ pub extern "C" fn _start() -> ! {
         }
         vga.color_palette_registers.load_palette(&bytes);
     }
+    */
 
-    let mode = Graphics320x240x256::new();
-    mode.clear_screen(64/2);
-
-    let mut gui = egui_euc::SoftwareGui::new();
+    //let mode = Graphics320x240x256::new();
+    //mode.clear_screen(64/2);
 
     let mut ps2 = initialize_ps2().unwrap();
 
@@ -81,90 +80,24 @@ pub extern "C" fn _start() -> ! {
         pc_keyboard::layouts::Us104Key,
         pc_keyboard::HandleControl::MapLettersToUnicode,
     );
-    mode.clear_screen(0x55);
-
-    let mut text = alloc::string::String::from("Hello text");
-    let mut raw_events = alloc::vec::Vec::new();
+    //mode.clear_screen(0x55);
 
     loop {
-        let mut raw_input: egui::RawInput = Default::default();
-
         while let Ok(byte) = ps2.read_data() {
             if let Ok(Some(event)) = keyboard.add_byte(byte) {
                 if let Some(key) = keyboard.process_keyevent(event.clone()) {
                     if let pc_keyboard::DecodedKey::Unicode(c) = key {
-                        let keystr = alloc::string::String::from(c);
-                        if let Some(key) = egui::Key::from_name(&keystr) {
-                            raw_input.events.push(egui::Event::Key {
-                                key,
-                                physical_key: Some(key),
-                                pressed: event.state != pc_keyboard::KeyState::Up,
-                                repeat: false,
-                                modifiers: Default::default(),
-                            });
-                            raw_input.events.push(egui::Event::Text(keystr));
-                        }
-
+                        let text_mode = Text80x25::new();
+                        text_mode.set_mode();
+                        write_message(b"Hello world \n");
                     }
 
                     if let pc_keyboard::DecodedKey::RawKey(raw) = key {
-                        raw_events.push(alloc::format!("{:?}", raw));
-                        let key = match raw {
-                            pc_keyboard::KeyCode::Tab => Some(egui::Key::Tab),
-                            pc_keyboard::KeyCode::ArrowUp => Some(egui::Key::ArrowUp),
-                            pc_keyboard::KeyCode::ArrowDown => Some(egui::Key::ArrowDown),
-                            pc_keyboard::KeyCode::ArrowRight => Some(egui::Key::ArrowRight),
-                            pc_keyboard::KeyCode::ArrowLeft => Some(egui::Key::ArrowLeft),
-                            pc_keyboard::KeyCode::Escape => Some(egui::Key::Escape),
-                            _ => Some(egui::Key::Tab),
-                        };
-                        if let Some(key) = key {
-                            raw_input.events.push(egui::Event::Key {
-                                key,
-                                physical_key: Some(key),
-                                pressed: event.state != pc_keyboard::KeyState::Up,
-                                repeat: false,
-                                modifiers: Default::default(),
-                            });
-                        }
                     }
                 }
             }
         }
 
-        // Run GUI
-        let image = gui.update(raw_input, [640, 480], |ctx| {
-            egui::CentralPanel::default().show(&ctx, |ui| {
-                ui.label(&text);
-                ui.add(Slider::new(&mut 10, 0..=20).prefix("A slider"));
-                if ui.button("A button").clicked() {
-                    // take some action here
-                }
-                ui.text_edit_multiline(&mut text);
-                ui.spinner();
-                ui.strong("Events:");
-                for event in &raw_events {
-                    ui.label(event);
-                }
-            });
-        });
-
-        // Draw GUI
-        draw_frame(&mode, &image);
-    }
-}
-
-fn draw_frame(mode: &Graphics320x240x256, frame: &egui::ColorImage) {
-    for y in 0..480 {
-        for x in 0..640 {
-            let pixel = frame[(x as usize, y as usize)];
-            let color = (pixel.r() as i32 + pixel.g() as i32 + pixel.b() as i32) / 3;
-
-            // Only supports 6 bit grayscale ... 
-            let color = color >> 2;
-
-            mode.set_pixel(x, y, color.clamp(0, 0xff) as u8);
-        }
     }
 }
 
