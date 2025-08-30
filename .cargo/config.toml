@@ -1,0 +1,7 @@
+[build]
+target = "x86_64-blog_os.json"
+#target = "x86_64-blog_os.toml"
+
+[unstable]
+build-std-features = ["compiler-builtins-mem"]
+build-std = ["core", "compiler_builtins", "alloc"]

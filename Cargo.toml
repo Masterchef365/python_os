@@ -1,0 +1,54 @@
+cargo-features = ["edition2024"]
+
+[package]
+name = "python_os"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bootloader = { version = "0.9", features = ["map_physical_memory"] }
+
+vga = "0.2.9"
+
+x86_64 = "=0.14.7"
+
+pc-keyboard = "0.8.0"
+ps2 = "0.2.0"
+
+linked_list_allocator = "0.10.5"
+
+egui = { version = "0.32.0", default-features = false }
+egui-euc = { git = "https://github.com/Masterchef365/egui-euc.git", branch = "no_std", default-features = false }
+#egui-euc = { path = "../egui-euc", default-features = false }
+euc = { git = "https://github.com/zesterer/euc.git", rev = "e8f7aee", default-features = false, features = ["micromath"] }
+#epaint = { path = "../egui/crates/epaint" }
+#emath = { path = "../egui/crates/emath" }
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+
+[package.metadata.bootloader]
+# The address at which the kernel stack is placed. If not provided, the bootloader
+# dynamically searches for a location.
+kernel-stack-address = "0xFFFFFF8000000000"
+
+# The size of the kernel stack, given in number of 4KiB pages. Defaults to 512.
+kernel-stack-size = 128
+
+# The virtual address offset from which physical memory is mapped, as described in
+# https://os.phil-opp.com/paging-implementation/#map-the-complete-physical-memory
+# Only applies if the `map_physical_memory` feature of the crate is enabled.
+# If not provided, the bootloader dynamically searches for a location.
+physical-memory-offset = "0xFFFF800000000000"
+
+# The address at which the bootinfo struct will be placed. if not provided,
+# the bootloader will dynamically search for a location.
+boot-info-address = "0xFFFFFFFF80000000"
+
+[patch.crates-io]
+#egui = { path = "../egui/crates/egui" }
+egui = { git = "https://github.com/Masterchef365/egui.git", branch = "no_std" }
