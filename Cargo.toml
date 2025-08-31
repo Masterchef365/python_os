@@ -18,6 +18,11 @@ ps2 = "0.2.0"
 linked_list_allocator = "0.10.5"
 
 rustpython-vm = { path = "../RustPython/vm/" }
+#rustpython-common = { path = "../RustPython/common/" }
+#rustpython-compiler = { path = "../RustPython/compiler/" }
+#rustpython-derive = { path = "../RustPython/derive" }
+#rustpython-compiler-core = { path = "../RustPython/compiler/core/" }
+#malachite-bigint = { path = "../malachite/malachite-bigint" }
 
 [profile.dev]
 panic = "abort"
