@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-
 extern crate alloc;
 
 use linked_list_allocator::LockedHeap;
