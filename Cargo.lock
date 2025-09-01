@@ -64,6 +64,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "234113d19d0d7d613b40e86fb654acf958910802bcceab913a4f9e7cda03b1a4"
 dependencies = [
  "memchr",
+ "regex-automata",
  "serde",
 ]
 
@@ -191,6 +192,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
+name = "cty"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -275,11 +282,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26145e563e54f2cadc477553f1ec5ee650b00862f0a58bcd12cbdc5f0ea2d2f4"
 dependencies = [
  "cfg-if",
- "js-sys",
  "libc",
  "r-efi",
  "wasi 0.14.3+wasi-0.2.4",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -351,18 +356,6 @@ checksum = "f2481980430f9f78649238835720ddccc57e52df14ffce1c6f37391d61b563e9"
 dependencies = [
  "equivalent",
  "hashbrown 0.15.5",
-]
-
-[[package]]
-name = "is-macro"
-version = "0.3.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d57a3e447e24c22647738e4607f1df1e0ec6f72e16182c4cd199f647cdfb0e4"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -449,9 +442,9 @@ checksum = "6a82ae493e598baaea5209805c49bbf2ea7de956d50d7da0da1164f9c6d28543"
 
 [[package]]
 name = "libffi"
-version = "4.1.1"
+version = "4.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7681c6fab541f799a829e44a445a0666cf8d8a6cfebf89419e6aed52c604e87"
+checksum = "b0feebbe0ccd382a2790f78d380540500d7b78ed7a3498b68fcfbc1593749a94"
 dependencies = [
  "libc",
  "libffi-sys",
@@ -459,9 +452,9 @@ dependencies = [
 
 [[package]]
 name = "libffi-sys"
-version = "3.3.2"
+version = "3.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b0d828d367b4450ed08e7d510dc46636cd660055f50d67ac943bfe788767c29"
+checksum = "90c6c6e17136d4bc439d43a2f3c6ccf0731cccc016d897473a29791d3c2160c3"
 dependencies = [
  "cc",
 ]
@@ -613,6 +606,15 @@ dependencies = [
  "cfg-if",
  "cfg_aliases",
  "libc",
+]
+
+[[package]]
+name = "no_std_io"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fa5f306a6f2c01b4fd172f29bb46195b1764061bf926c75e96ff55df3178208"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
@@ -852,10 +854,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "regex-automata"
+version = "0.4.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b9458fa0bfeeac22b5ca447c63aaf45f28439a709ccd244698632f9aa6394d6"
+
+[[package]]
 name = "result-like"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abf7172fef6a7d056b5c26bf6c826570267562d51697f4982ff3ba4aec68a9df"
+source = "git+https://github.com/Masterchef365/result-like.git?branch=no_std#b5acc1a841ef1a3720594744118032d591287afd"
 dependencies = [
  "result-like-derive",
 ]
@@ -863,8 +870,7 @@ dependencies = [
 [[package]]
 name = "result-like-derive"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8d6574c02e894d66370cfc681e5d68fedbc9a548fb55b30a96b3f0ae22d0fe5"
+source = "git+https://github.com/Masterchef365/result-like.git?branch=no_std#b5acc1a841ef1a3720594744118032d591287afd"
 dependencies = [
  "pmutil",
  "proc-macro2",
@@ -880,7 +886,7 @@ dependencies = [
  "aho-corasick",
  "bitflags 2.9.3",
  "compact_str",
- "is-macro 0.3.7 (git+https://github.com/Masterchef365/ddbase.git?branch=no_std-is-macro)",
+ "is-macro",
  "itertools",
  "memchr",
  "once_cell",
@@ -1004,6 +1010,7 @@ dependencies = [
  "rustpython-wtf8",
  "siphasher",
  "unicode_names2",
+ "unix_path",
  "widestring",
  "windows-sys 0.59.0",
 ]
@@ -1075,7 +1082,7 @@ name = "rustpython-literal"
 version = "0.4.0"
 dependencies = [
  "hexf-parse",
- "is-macro 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "is-macro",
  "lexical-parse-float",
  "num-traits",
  "rustpython-wtf8",
@@ -1105,14 +1112,16 @@ dependencies = [
  "chrono",
  "constant_time_eq",
  "crossbeam-utils",
+ "cty",
  "errno",
  "exitcode",
  "getrandom 0.3.3",
  "glob",
  "half",
+ "hashbrown 0.16.0",
  "hex",
  "indexmap",
- "is-macro 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "is-macro",
  "itertools",
  "junction",
  "libc",
@@ -1123,6 +1132,7 @@ dependencies = [
  "memchr",
  "memoffset",
  "nix 0.29.0",
+ "no_std_io",
  "num-complex",
  "num-integer",
  "num-traits",
@@ -1132,13 +1142,9 @@ dependencies = [
  "optional",
  "paste",
  "result-like",
- "ruff_python_ast",
  "ruff_python_parser",
- "ruff_text_size",
  "rustix",
- "rustpython-codegen",
  "rustpython-common",
- "rustpython-compiler",
  "rustpython-compiler-core",
  "rustpython-derive",
  "rustpython-literal",
@@ -1156,7 +1162,7 @@ dependencies = [
  "unic-ucd-ident",
  "unicode-casing",
  "unicode_names2",
- "wasm-bindgen",
+ "unix_path",
  "which",
  "widestring",
  "windows",
@@ -1439,8 +1445,7 @@ dependencies = [
 [[package]]
 name = "unicode-casing"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "623f59e6af2a98bdafeb93fa277ac8e1e40440973001ca15cf4ae1541cd16d56"
+source = "git+https://github.com/Masterchef365/unicode-casing.git?branch=no_std#23a24d2700d804e0f719816d81ad6fe5c4385327"
 
 [[package]]
 name = "unicode-ident"
