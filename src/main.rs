@@ -47,7 +47,13 @@ pub extern "C" fn _start() -> ! {
 
     println!("Starting...");
 
-    rustpython_vm::Interpreter::without_stdlib(Default::default()).enter(|vm| {
+    let rdrand = RdRand::new().expect("No RDRAND!");
+    println!("Value: {:?}", rdrand.get_u64());
+
+    let interpreter = rustpython_vm::Interpreter::without_stdlib(Default::default());
+    println!("Entering...");
+
+    interpreter.enter(|vm| {
         println!("Enter context");
         /*
         let scope = vm.new_scope_with_builtins();
@@ -187,7 +193,7 @@ fn initialize_ps2() -> Result<Controller, ControllerError> {
     Ok(controller)
 }
 
-use x86_64::registers::control::{Cr0, Cr0Flags, Cr4, Cr4Flags};
+use x86_64::{instructions::random::RdRand, registers::control::{Cr0, Cr0Flags, Cr4, Cr4Flags}};
 
 pub fn enable_sse() {
     // --- CR0 setup ---
