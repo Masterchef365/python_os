@@ -41,6 +41,7 @@ pub extern "C" fn _start() -> ! {
     enable_sse();
     init_heap();
 
+    /*
     rustpython_vm::Interpreter::without_stdlib(Default::default()).enter(|vm| {
         let scope = vm.new_scope_with_builtins();
         let source = r#"6 * 7 * 2 * 5"#;
@@ -55,6 +56,7 @@ pub extern "C" fn _start() -> ! {
 
         Ok(())
     });
+    */
     
     /*
     {
