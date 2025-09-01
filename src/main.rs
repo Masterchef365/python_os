@@ -55,18 +55,16 @@ pub extern "C" fn _start() -> ! {
 
     interpreter.enter(|vm| {
         println!("Enter context");
-        /*
         let scope = vm.new_scope_with_builtins();
         let source = r#"6 * 7 * 2 * 5"#;
         let code_obj = vm
-            .compile(source, rustpython_vm::compiler::Mode::Exec, "<embedded>".to_owned())
+            .compile(source, rustpython_vm::compiler::Mode::Eval, "<embedded>".to_owned())
             .map_err(|err| vm.new_syntax_error(&err, Some(source))).unwrap();
 
         let result = vm.run_code_obj(code_obj, scope).unwrap();
         
         let msg = alloc::format!("{result:?}");
         vga_buffer::WRITER.lock().write_str(&msg).unwrap();
-        */
 
         //Ok(())
     });
