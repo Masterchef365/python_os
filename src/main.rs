@@ -37,6 +37,7 @@ fn panic(info: &PanicInfo) -> ! {
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
     // Initialize the heap. Must be called before ANY allocations!
+    enable_sse();
     init_heap();
     
     /*
@@ -156,4 +157,32 @@ fn initialize_ps2() -> Result<Controller, ControllerError> {
     controller.write_config(config)?;
 
     Ok(controller)
+}
+
+use x86_64::registers::control::{Cr0, Cr0Flags, Cr4, Cr4Flags};
+
+pub fn enable_sse() {
+    // --- CR0 setup ---
+    let mut cr0 = Cr0::read();
+    cr0.remove(Cr0Flags::EMULATE_COPROCESSOR); // clear EM bit
+    cr0.insert(Cr0Flags::MONITOR_COPROCESSOR); // set MP bit
+    unsafe {
+        Cr0::write(cr0);
+    }
+
+    // --- CR4 setup ---
+    let mut cr4 = Cr4::read();
+    cr4.insert(Cr4Flags::OSFXSR);     // enable FXSAVE/FXRSTOR
+    //cr4.insert(Cr4Flags::OSXMMEXCPT); // enable unmasked SIMD FP exceptions
+    unsafe {
+        Cr4::write(cr4);
+    }
+
+    // --- Init FP/SSE state ---
+    unsafe {
+        core::arch::asm!("fninit"); // reset x87 FPU
+        // Optionally, load a default MXCSR (control/status for SSE)
+        let mxcsr: u32 = 0x1F80; // all exceptions masked, round-to-nearest
+        core::arch::asm!("ldmxcsr [{}]", in(reg) &mxcsr);
+    }
 }
