@@ -56,17 +56,38 @@ pub extern "C" fn _start() -> ! {
     interpreter.enter(|vm| {
         println!("Enter context");
         let scope = vm.new_scope_with_builtins();
-        let source = r#"6 * 7 * 2 * 5"#;
+        //let source = r#"6 * 7 * 2 * 5"#;
+        let source = r#"def fibRec(n):
+    if n < 2:
+        return n
+    else:
+        return fibRec(n-1) + fibRec(n-2)"#;
+        let code_obj = vm
+            .compile(source, rustpython_vm::compiler::Mode::Exec, "<embedded>".to_owned())
+            .map_err(|err| vm.new_syntax_error(&err, Some(source)))
+            .unwrap();
+
+        let result = vm.run_code_obj(code_obj, scope.clone()).unwrap();
+        
+        println!("exec {result:?}");
+
+        let source = "fibRec(20)";
         let code_obj = vm
             .compile(source, rustpython_vm::compiler::Mode::Eval, "<embedded>".to_owned())
             .map_err(|err| vm.new_syntax_error(&err, Some(source))).unwrap();
-
-        let result = vm.run_code_obj(code_obj, scope).unwrap();
+        let result = vm.run_code_obj(code_obj, scope);
+        match result {
+            Err(e) => {
+                let mut s = alloc::string::String::new();
+                vm.write_exception(&mut s, &e).unwrap();
+                println!("Exception: {s}");
+            }
+            Ok(v) => {
+                println!("{v:?}");
+            }
+            //e.payload()
+        }
         
-        let msg = alloc::format!("{result:?}");
-        vga_buffer::WRITER.lock().write_str(&msg).unwrap();
-
-        //Ok(())
     });
     println!("Exit");
 
