@@ -119,7 +119,6 @@ pub extern "C" fn _start() -> ! {
     loop {
         let source = read_string(&mut ps2, &mut keyboard);
         let source = source.trim();
-        println!("GOT LINE {source:?}");
 
         interpreter.enter(|vm| {
 
