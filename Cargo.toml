@@ -16,7 +16,7 @@ ps2 = "0.2.0"
 
 linked_list_allocator = "0.10.5"
 
-#rustpython-vm = { path = "../RustPython/vm/", default-features = false }
+rustpython-vm = { path = "../RustPython/vm/", default-features = false }
 #rustpython-common = { path = "../RustPython/common/" }
 #rustpython-compiler = { path = "../RustPython/compiler/" }
 #rustpython-derive = { path = "../RustPython/derive" }
