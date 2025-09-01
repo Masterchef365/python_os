@@ -2,6 +2,7 @@
 #![no_main]
 extern crate alloc;
 
+use alloc::borrow::ToOwned;
 use linked_list_allocator::LockedHeap;
 
 #[global_allocator]
@@ -39,6 +40,21 @@ pub extern "C" fn _start() -> ! {
     // Initialize the heap. Must be called before ANY allocations!
     enable_sse();
     init_heap();
+
+    rustpython_vm::Interpreter::without_stdlib(Default::default()).enter(|vm| {
+        let scope = vm.new_scope_with_builtins();
+        let source = r#"6 * 7 * 2 * 5"#;
+        let code_obj = vm
+            .compile(source, rustpython_vm::compiler::Mode::Exec, "<embedded>".to_owned())
+            .map_err(|err| vm.new_syntax_error(&err, Some(source)))?;
+
+        let result = vm.run_code_obj(code_obj, scope)?;
+        
+        let msg = alloc::format!("{result:?}");
+        vga_buffer::WRITER.lock().write_str(&msg);
+
+        Ok(())
+    });
     
     /*
     {
