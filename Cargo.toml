@@ -22,9 +22,12 @@ rustpython-vm = { path = "../RustPython/vm/", default-features = false, features
 #rustpython-derive = { path = "../RustPython/derive" }
 #rustpython-compiler-core = { path = "../RustPython/compiler/core/" }
 #malachite-bigint = { path = "../malachite/malachite-bigint" }
-spin = "0.5.2"
 lazy_static = { version = "1.0", features = ["spin_no_std"] }
 volatile = "0.2.6"
+
+# Atomics
+portable-atomic = { version = "1.3", features = ["critical-section"] }
+spin = { version = "0.10.0", features = ["portable-atomic"] }
 
 #[profile.dev]
 #panic = "abort"
