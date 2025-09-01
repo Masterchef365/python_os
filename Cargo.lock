@@ -983,7 +983,6 @@ dependencies = [
 [[package]]
 name = "rustpython-codegen"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "ahash",
  "bitflags 2.9.3",
@@ -1007,7 +1006,6 @@ dependencies = [
 [[package]]
 name = "rustpython-common"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "ascii",
  "bitflags 2.9.3",
@@ -1037,7 +1035,6 @@ dependencies = [
 [[package]]
 name = "rustpython-compiler"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "ruff_python_ast",
  "ruff_python_parser",
@@ -1051,7 +1048,6 @@ dependencies = [
 [[package]]
 name = "rustpython-compiler-core"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "bitflags 2.9.3",
  "itertools",
@@ -1065,7 +1061,6 @@ dependencies = [
 [[package]]
 name = "rustpython-derive"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "proc-macro2",
  "rustpython-compiler",
@@ -1076,7 +1071,6 @@ dependencies = [
 [[package]]
 name = "rustpython-derive-impl"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "hashbrown 0.16.0",
  "itertools",
@@ -1103,7 +1097,6 @@ dependencies = [
 [[package]]
 name = "rustpython-literal"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "hexf-parse",
  "is-macro",
@@ -1116,7 +1109,6 @@ dependencies = [
 [[package]]
 name = "rustpython-sre_engine"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "bitflags 2.9.3",
  "num_enum",
@@ -1127,7 +1119,6 @@ dependencies = [
 [[package]]
 name = "rustpython-vm"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "ahash",
  "ascii",
@@ -1203,7 +1194,6 @@ dependencies = [
 [[package]]
 name = "rustpython-wtf8"
 version = "0.4.0"
-source = "git+https://github.com/Masterchef365/RustPython.git?branch=no_std2#6fb78945fcc5c86baf906a7afc414c62cd590ea7"
 dependencies = [
  "ascii",
  "bstr",

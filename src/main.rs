@@ -1,11 +1,11 @@
 #![allow(static_mut_refs)]
-
 #![no_std]
 #![no_main]
 extern crate alloc;
 
-use alloc::borrow::ToOwned;
+use alloc::{borrow::ToOwned, string::String};
 use linked_list_allocator::LockedHeap;
+use pc_keyboard::{layouts::Us104Key, ScancodeSet2};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -33,84 +33,52 @@ pub fn init_heap() {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     let location = info.location().unwrap();
-    let msg = alloc::format!("Panicked: {}:{} {}", location.file(), location.line(), info.message());
+    let msg = alloc::format!(
+        "Panicked: {}:{} {}",
+        location.file(),
+        location.line(),
+        info.message()
+    );
     vga_buffer::WRITER.lock().write_str(&msg);
 
     loop {}
 }
 
+fn read_string(
+    ps2: &mut Controller,
+    keyboard: &mut pc_keyboard::Keyboard<Us104Key, ScancodeSet2>,
+) -> String {
+    let mut string = String::new();
+
+    loop {
+        while let Ok(byte) = ps2.read_data() {
+            if let Ok(Some(event)) = keyboard.add_byte(byte) {
+                if let Some(key) = keyboard.process_keyevent(event.clone()) {
+                    if let pc_keyboard::DecodedKey::Unicode(c) = key {
+                        print!("{c}");
+                        if c == '\n' {
+                            return string;
+                        } else {
+                            string.push(c);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    // Initialize the heap. Must be called before ANY allocations!
     enable_sse();
+
+    // Initialize the heap. Must be called before ANY allocations!
     init_heap();
 
     println!("Starting...");
-
-    let rdrand = RdRand::new().expect("No RDRAND!");
-    println!("Value: {:?}", rdrand.get_u64());
-
     let interpreter = rustpython_vm::Interpreter::without_stdlib(Default::default());
-    println!("Entering...");
 
-    interpreter.enter(|vm| {
-        println!("Enter context");
-        let scope = vm.new_scope_with_builtins();
-        //let source = r#"6 * 7 * 2 * 5"#;
-        let source = r#"def fibRec(n):
-    if n < 2:
-        return n
-    else:
-        return fibRec(n-1) + fibRec(n-2)"#;
-        let code_obj = vm
-            .compile(source, rustpython_vm::compiler::Mode::Exec, "<embedded>".to_owned())
-            .map_err(|err| vm.new_syntax_error(&err, Some(source)))
-            .unwrap();
-
-        let result = vm.run_code_obj(code_obj, scope.clone()).unwrap();
-        
-        println!("exec {result:?}");
-
-        let source = "fibRec(20)";
-        let code_obj = vm
-            .compile(source, rustpython_vm::compiler::Mode::Eval, "<embedded>".to_owned())
-            .map_err(|err| vm.new_syntax_error(&err, Some(source))).unwrap();
-        let result = vm.run_code_obj(code_obj, scope);
-        match result {
-            Err(e) => {
-                let mut s = alloc::string::String::new();
-                vm.write_exception(&mut s, &e).unwrap();
-                println!("Exception: {s}");
-            }
-            Ok(v) => {
-                println!("{v:?}");
-            }
-            //e.payload()
-        }
-        
-    });
-    println!("Exit");
-
-    loop {}
-    
-    /*
-    {
-        let mode = Graphics320x240x256::new();
-        mode.set_mode();
-    }
-    {
-        let mut vga = vga::vga::VGA.lock();
-        vga.set_memory_start(0xa0000);
-        let mut bytes = [0xff_u8; 768];
-        for (i, rgb) in bytes.chunks_exact_mut(3).enumerate() {
-            rgb.fill(i.clamp(0, 0xff) as u8);
-        }
-        vga.color_palette_registers.load_palette(&bytes);
-    }
-    */
-
-    //let mode = Graphics320x240x256::new();
-    //mode.clear_screen(64/2);
+    let scope = interpreter.enter(|vm| vm.new_scope_with_builtins());
 
     let mut ps2 = initialize_ps2().unwrap();
 
@@ -119,30 +87,38 @@ pub extern "C" fn _start() -> ! {
         pc_keyboard::layouts::Us104Key,
         pc_keyboard::HandleControl::MapLettersToUnicode,
     );
-    //mode.clear_screen(0x55);
 
-    panic!("Yay panicking!!!!");
-    /*
+    println!("RustPython v0.4.0");
+    print!(">>> ");
     loop {
-        while let Ok(byte) = ps2.read_data() {
-            if let Ok(Some(event)) = keyboard.add_byte(byte) {
-                if let Some(key) = keyboard.process_keyevent(event.clone()) {
-                    if let pc_keyboard::DecodedKey::Unicode(c) = key {
-                        let text_mode = Text80x25::new();
-                        text_mode.set_mode();
-                        //write_message(b"Hello world \n");
-                    }
+        let source = read_string(&mut ps2, &mut keyboard);
+        let source = source.trim();
+        println!("GOT LINE {source}");
 
-                    if let pc_keyboard::DecodedKey::RawKey(raw) = key {
-                    }
+        interpreter.enter(|vm| {
+
+            let result = vm
+                .compile(
+                    &source,
+                    rustpython_vm::compiler::Mode::Eval,
+                    "<embedded>".to_owned(),
+                )
+                .map_err(|err| vm.new_syntax_error(&err, Some(&source)))
+                .and_then(|code_obj| vm.run_code_obj(code_obj, scope.clone()));
+
+            match result {
+                Err(e) => {
+                    let mut s = alloc::string::String::new();
+                    vm.write_exception(&mut s, &e).unwrap();
+                    println!("Exception: {s}");
+                }
+                Ok(v) => {
+                    println!("{v:?}");
                 }
             }
-        }
-
+        });
+        print!(">>> ");
     }
-    */
-
-    loop {}
 }
 
 fn initialize_ps2() -> Result<Controller, ControllerError> {
@@ -212,7 +188,10 @@ fn initialize_ps2() -> Result<Controller, ControllerError> {
     Ok(controller)
 }
 
-use x86_64::{instructions::random::RdRand, registers::control::{Cr0, Cr0Flags, Cr4, Cr4Flags}};
+use x86_64::{
+    instructions::random::RdRand,
+    registers::control::{Cr0, Cr0Flags, Cr4, Cr4Flags},
+};
 
 pub fn enable_sse() {
     // --- CR0 setup ---
@@ -225,8 +204,8 @@ pub fn enable_sse() {
 
     // --- CR4 setup ---
     let mut cr4 = Cr4::read();
-    cr4.insert(Cr4Flags::OSFXSR);     // enable FXSAVE/FXRSTOR
-    //cr4.insert(Cr4Flags::OSXMMEXCPT); // enable unmasked SIMD FP exceptions
+    cr4.insert(Cr4Flags::OSFXSR); // enable FXSAVE/FXRSTOR
+                                  //cr4.insert(Cr4Flags::OSXMMEXCPT); // enable unmasked SIMD FP exceptions
     unsafe {
         Cr4::write(cr4);
     }
@@ -234,7 +213,7 @@ pub fn enable_sse() {
     // --- Init FP/SSE state ---
     unsafe {
         core::arch::asm!("fninit"); // reset x87 FPU
-        // Optionally, load a default MXCSR (control/status for SSE)
+                                    // Optionally, load a default MXCSR (control/status for SSE)
         let mxcsr: u32 = 0x1F80; // all exceptions masked, round-to-nearest
         core::arch::asm!("ldmxcsr [{}]", in(reg) &mxcsr);
     }
