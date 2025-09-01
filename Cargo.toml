@@ -33,7 +33,8 @@ spin = { version = "0.10.0", features = ["portable-atomic"] }
 #[profile.dev]
 #panic = "abort"
 
-#[profile.release]
+[profile.release]
+debug = true
 #panic = "abort"
 
 

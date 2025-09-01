@@ -14,6 +14,7 @@ use core::{fmt::Write, panic::PanicInfo};
 use ps2::{error::ControllerError, flags::ControllerConfigFlags, Controller};
 use vga::writers::{Graphics320x240x256, GraphicsWriter, Text80x25, TextWriter};
 
+#[macro_use]
 mod vga_buffer;
 mod atomics;
 
@@ -44,7 +45,11 @@ pub extern "C" fn _start() -> ! {
     enable_sse();
     init_heap();
 
+    println!("Starting...");
+
     rustpython_vm::Interpreter::without_stdlib(Default::default()).enter(|vm| {
+        println!("Enter context");
+        /*
         let scope = vm.new_scope_with_builtins();
         let source = r#"6 * 7 * 2 * 5"#;
         let code_obj = vm
@@ -55,10 +60,13 @@ pub extern "C" fn _start() -> ! {
         
         let msg = alloc::format!("{result:?}");
         vga_buffer::WRITER.lock().write_str(&msg).unwrap();
+        */
 
-        loop {}
         //Ok(())
     });
+    println!("Exit");
+
+    loop {}
     
     /*
     {
