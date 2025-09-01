@@ -7,7 +7,6 @@ edition = "2024"
 
 [dependencies]
 bootloader = { version = "0.9", features = ["map_physical_memory"] }
-
 vga = "0.2.9"
 
 x86_64 = "=0.14.7"
@@ -17,18 +16,21 @@ ps2 = "0.2.0"
 
 linked_list_allocator = "0.10.5"
 
-rustpython-vm = { path = "../RustPython/vm/", default-features = false }
+#rustpython-vm = { path = "../RustPython/vm/", default-features = false }
 #rustpython-common = { path = "../RustPython/common/" }
 #rustpython-compiler = { path = "../RustPython/compiler/" }
 #rustpython-derive = { path = "../RustPython/derive" }
 #rustpython-compiler-core = { path = "../RustPython/compiler/core/" }
 #malachite-bigint = { path = "../malachite/malachite-bigint" }
+spin = "0.5.2"
+lazy_static = { version = "1.0", features = ["spin_no_std"] }
+volatile = "0.2.6"
 
-[profile.dev]
-panic = "abort"
+#[profile.dev]
+#panic = "abort"
 
-[profile.release]
-panic = "abort"
+#[profile.release]
+#panic = "abort"
 
 
 [package.metadata.bootloader]

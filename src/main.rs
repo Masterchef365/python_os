@@ -7,9 +7,11 @@ use linked_list_allocator::LockedHeap;
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
-use core::panic::PanicInfo;
+use core::{fmt::Write, panic::PanicInfo};
 use ps2::{error::ControllerError, flags::ControllerConfigFlags, Controller};
 use vga::writers::{Graphics320x240x256, GraphicsWriter, Text80x25, TextWriter};
+
+mod vga_buffer;
 
 pub fn init_heap() {
     //pub const HEAP_START: usize = 0x_4444_4444_0000;
@@ -22,27 +24,12 @@ pub fn init_heap() {
     }
 }
 
-fn write_message(bytes: &[u8]) {
-    use vga::colors::{Color16, TextModeColor};
-    use vga::writers::{ScreenCharacter, Text80x25, TextWriter};
-
-    let text_mode = Text80x25::new();
-
-    text_mode.set_mode();
-    for (i, &byte) in bytes.iter().enumerate() {
-        text_mode.write_character(
-            i,
-            0,
-            ScreenCharacter::new(byte, TextModeColor::new(Color16::White, Color16::Black)),
-        );
-    }
-}
-
 /// This function is called on panic.
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    let msg = alloc::format!("panicked: {}", info.message());
-    write_message(msg.as_bytes());
+    let location = info.location().unwrap();
+    let msg = alloc::format!("Panicked: {}:{} {}", location.file(), location.line(), info.message());
+    vga_buffer::WRITER.lock().write_str(&msg);
 
     loop {}
 }
@@ -51,7 +38,6 @@ fn panic(info: &PanicInfo) -> ! {
 pub extern "C" fn _start() -> ! {
     // Initialize the heap. Must be called before ANY allocations!
     init_heap();
-
     
     /*
     {
@@ -81,6 +67,8 @@ pub extern "C" fn _start() -> ! {
     );
     //mode.clear_screen(0x55);
 
+    panic!("Yay panicking!!!!");
+    /*
     loop {
         while let Ok(byte) = ps2.read_data() {
             if let Ok(Some(event)) = keyboard.add_byte(byte) {
@@ -88,7 +76,7 @@ pub extern "C" fn _start() -> ! {
                     if let pc_keyboard::DecodedKey::Unicode(c) = key {
                         let text_mode = Text80x25::new();
                         text_mode.set_mode();
-                        write_message(b"Hello world \n");
+                        //write_message(b"Hello world \n");
                     }
 
                     if let pc_keyboard::DecodedKey::RawKey(raw) = key {
@@ -98,6 +86,9 @@ pub extern "C" fn _start() -> ! {
         }
 
     }
+    */
+
+    loop {}
 }
 
 fn initialize_ps2() -> Result<Controller, ControllerError> {
