@@ -3,14 +3,16 @@
 #![no_main]
 extern crate alloc;
 
-use alloc::{borrow::ToOwned, string::String};
+use alloc::{borrow::ToOwned, rc::Rc, string::String, vec::Vec};
+use alloc::vec;
 use linked_list_allocator::LockedHeap;
 use pc_keyboard::{layouts::Us104Key, ScancodeSet2};
+use rustpython_vm::VirtualMachine;
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
-use core::{fmt::Write, panic::PanicInfo};
+use core::{cell::RefCell, fmt::Write, panic::PanicInfo};
 use ps2::{error::ControllerError, flags::ControllerConfigFlags, Controller};
 use vga::writers::{Graphics320x240x256, GraphicsWriter, Text80x25, TextWriter};
 
@@ -39,7 +41,7 @@ fn panic(info: &PanicInfo) -> ! {
         location.line(),
         info.message()
     );
-    vga_buffer::WRITER.lock().write_str(&msg);
+    let _ = vga_buffer::WRITER.lock().write_str(&msg);
 
     loop {}
 }
@@ -68,6 +70,28 @@ fn read_string(
     }
 }
 
+fn anon_object(vm: &VirtualMachine, name: &str) -> rustpython_vm::PyObjectRef {
+    let py_type = vm.builtins.get_attr("type", vm).unwrap();
+    let args = (name, vm.ctx.new_tuple(vec![]), vm.ctx.new_dict());
+    py_type.call(args, vm).unwrap()
+}
+
+
+fn install_stdout(vm: &VirtualMachine) {
+    let sys = vm.import("sys", 0).unwrap();
+
+    let stdout = anon_object(vm, "InternalStdout");
+
+    let writer = vm.new_function("write", move |s: String| {
+        print!("{s}")
+    });
+
+    stdout.set_attr("write", writer, vm).unwrap();
+
+    sys.set_attr("stdout", stdout.clone(), vm).unwrap();
+}
+
+
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
     enable_sse();
@@ -88,19 +112,21 @@ pub extern "C" fn _start() -> ! {
         pc_keyboard::HandleControl::MapLettersToUnicode,
     );
 
+    interpreter.enter(|vm| install_stdout(vm));
+
     println!("RustPython v0.4.0");
     print!(">>> ");
     loop {
         let source = read_string(&mut ps2, &mut keyboard);
         let source = source.trim();
-        println!("GOT LINE {source}");
+        println!("GOT LINE {source:?}");
 
         interpreter.enter(|vm| {
 
             let result = vm
                 .compile(
                     &source,
-                    rustpython_vm::compiler::Mode::Eval,
+                    rustpython_vm::compiler::Mode::Single,
                     "<embedded>".to_owned(),
                 )
                 .map_err(|err| vm.new_syntax_error(&err, Some(&source)))
