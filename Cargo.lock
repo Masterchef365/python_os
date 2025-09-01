@@ -803,6 +803,7 @@ name = "python_os"
 version = "0.1.0"
 dependencies = [
  "bootloader",
+ "critical-section",
  "lazy_static",
  "linked_list_allocator",
  "pc-keyboard",

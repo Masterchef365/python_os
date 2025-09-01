@@ -27,6 +27,7 @@ volatile = "0.2.6"
 
 # Atomics
 portable-atomic = { version = "1.3", features = ["critical-section"] }
+critical-section = { version = "1.1", features = ["restore-state-bool"] }
 spin = { version = "0.10.0", features = ["portable-atomic"] }
 
 #[profile.dev]

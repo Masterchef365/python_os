@@ -1,3 +1,5 @@
+#![allow(static_mut_refs)]
+
 #![no_std]
 #![no_main]
 extern crate alloc;
@@ -13,6 +15,7 @@ use ps2::{error::ControllerError, flags::ControllerConfigFlags, Controller};
 use vga::writers::{Graphics320x240x256, GraphicsWriter, Text80x25, TextWriter};
 
 mod vga_buffer;
+mod atomics;
 
 pub fn init_heap() {
     //pub const HEAP_START: usize = 0x_4444_4444_0000;
