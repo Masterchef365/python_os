@@ -19,6 +19,7 @@ use vga::writers::{Graphics320x240x256, GraphicsWriter, Text80x25, TextWriter};
 #[macro_use]
 mod vga_buffer;
 mod atomics;
+mod ata;
 
 pub fn init_heap() {
     //pub const HEAP_START: usize = 0x_4444_4444_0000;
@@ -100,6 +101,10 @@ pub extern "C" fn _start() -> ! {
     init_heap();
 
     println!("Starting...");
+
+    let bytes = ata::read_lba(false, 0, 1);
+    panic!("{bytes:?}");
+
     let interpreter = rustpython_vm::Interpreter::without_stdlib(Default::default());
 
     let scope = interpreter.enter(|vm| vm.new_scope_with_builtins());
