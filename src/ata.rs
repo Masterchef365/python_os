@@ -1,3 +1,4 @@
+//! https://wiki.osdev.org/ATA_PIO_Mode
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -16,7 +17,6 @@ pub fn read_lba(drive_sel: bool, lba: u64, sectors: u16) -> Vec<u8> {
     let [lba1, lba2, lba3, lba4, lba5, lba6, _lba7, _lba8] = lba.to_be_bytes();
     let [sector_low, sector_high] = sectors.to_be_bytes();
 
-    // https://wiki.osdev.org/ATA_PIO_Mode
     write_port_byte(0x1F6, 0x40 | ((drive_sel as u8) << 4));
     write_port_byte(0x1F2, sector_high);
     write_port_byte(0x1F3, lba4);

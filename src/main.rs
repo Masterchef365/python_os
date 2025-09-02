@@ -7,6 +7,7 @@ use alloc::{borrow::ToOwned, rc::Rc, string::String, vec::Vec};
 use alloc::vec;
 use linked_list_allocator::LockedHeap;
 use pc_keyboard::{layouts::Us104Key, ScancodeSet2};
+use rustpython_vm::scope::Scope;
 use rustpython_vm::VirtualMachine;
 
 #[global_allocator]
@@ -93,6 +94,16 @@ fn install_stdout(vm: &VirtualMachine) {
 }
 
 
+fn install_ata(vm: &VirtualMachine, scope: Scope) {
+    let read_ata = vm.new_function("read_ata", move |lba: u64| {
+        ata::read_lba(false, lba, 1)
+    });
+
+    scope.globals.set_item("read_ata", read_ata.into(), vm).unwrap();
+}
+
+
+
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
     enable_sse();
@@ -101,9 +112,6 @@ pub extern "C" fn _start() -> ! {
     init_heap();
 
     println!("Starting...");
-
-    let bytes = ata::read_lba(false, 0, 1);
-    panic!("{bytes:?}");
 
     let interpreter = rustpython_vm::Interpreter::without_stdlib(Default::default());
 
@@ -118,6 +126,7 @@ pub extern "C" fn _start() -> ! {
     );
 
     interpreter.enter(|vm| install_stdout(vm));
+    interpreter.enter(|vm| install_ata(vm, scope.clone()));
 
     println!("RustPython v0.4.0");
     print!(">>> ");
