@@ -18,7 +18,7 @@ use ps2::{error::ControllerError, flags::ControllerConfigFlags, Controller};
 use vga::writers::{Graphics320x240x256, GraphicsWriter, Text80x25, TextWriter};
 
 #[macro_use]
-mod vga_buffer;
+pub mod vga_buffer;
 mod atomics;
 mod ata;
 
