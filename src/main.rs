@@ -100,8 +100,13 @@ fn install_ata(vm: &VirtualMachine, scope: Scope) {
     });
 
     scope.globals.set_item("read_ata", read_ata.into(), vm).unwrap();
-}
 
+    let write_ata = vm.new_function("write_ata", move |lba: u64, data: Vec<u8>| {
+        ata::write_lba(false, lba, 1, data.as_slice())
+    });
+
+    scope.globals.set_item("write_ata", write_ata.into(), vm).unwrap();
+}
 
 
 #[unsafe(no_mangle)]
