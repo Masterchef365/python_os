@@ -22,13 +22,21 @@ pub mod vga_buffer;
 mod atomics;
 mod ata;
 
-use core::num::NonZeroU32;
-use getrandom::Error;
+#[unsafe(no_mangle)]
+unsafe extern "Rust" fn __getrandom_v03_custom(
+    dest: *mut u8,
+    len: usize,
+) -> Result<(), getrandom::Error> {
+    for i in 0..len as isize {
+        unsafe {
+            // Chosen by fair coin flip.
+            // Gauranteed to be random.
+            *dest.offset(i) = 1; 
+        }
+    }
 
-use getrandom::register_custom_getrandom;
-register_custom_getrandom!(custom_random);
-pub fn custom_random(buf: &mut [u8]) -> Result<(), Error> {
-    Ok(buf.fill(0))
+    // All good here :)
+    Ok(())
 }
 
 pub fn init_heap() {
