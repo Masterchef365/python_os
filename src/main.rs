@@ -27,11 +27,11 @@ unsafe extern "Rust" fn __getrandom_v03_custom(
     dest: *mut u8,
     len: usize,
 ) -> Result<(), getrandom::Error> {
+    static mut NOTRANDOM: u8 = 0;
     for i in 0..len as isize {
         unsafe {
-            // Chosen by fair coin flip.
-            // Gauranteed to be random.
-            *dest.offset(i) = 1; 
+            NOTRANDOM = NOTRANDOM.wrapping_add(1);
+            *dest.offset(i) = NOTRANDOM; 
         }
     }
 
