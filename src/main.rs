@@ -22,12 +22,21 @@ pub mod vga_buffer;
 mod atomics;
 mod ata;
 
+use core::num::NonZeroU32;
+use getrandom::Error;
+
+use getrandom::register_custom_getrandom;
+register_custom_getrandom!(custom_random);
+pub fn custom_random(buf: &mut [u8]) -> Result<(), Error> {
+    Ok(buf.fill(0))
+}
+
 pub fn init_heap() {
     //pub const HEAP_START: usize = 0x_4444_4444_0000;
     pub const PHYSICAL_MEMORY_OFFSET: usize = 0xFFFF800000000000;
     pub const PHYSICAL_HEAP_OFFSET: usize = 1024 * 1024 * 100;
     pub const HEAP_START: usize = PHYSICAL_MEMORY_OFFSET + PHYSICAL_HEAP_OFFSET; // + 100 MB
-    pub const HEAP_SIZE: usize = (1 << 32) - PHYSICAL_HEAP_OFFSET; // Arbitrarily decide 4GB
+    pub const HEAP_SIZE: usize = (1 << 31) - PHYSICAL_HEAP_OFFSET; // Arbitrarily decide 2GB
     unsafe {
         ALLOCATOR.lock().init(HEAP_START as *mut _, HEAP_SIZE);
     }
