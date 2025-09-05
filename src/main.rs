@@ -3,11 +3,16 @@
 #![no_main]
 extern crate alloc;
 
-use alloc::{borrow::ToOwned, rc::Rc, string::String, vec::Vec};
 use alloc::vec;
+use alloc::{borrow::ToOwned, rc::Rc, string::String, vec::Vec};
 use linked_list_allocator::LockedHeap;
 use pc_keyboard::{layouts::Us104Key, ScancodeSet2};
-use rustpython_vm::VirtualMachine;
+use rustpython_vm::convert::ToPyObject;
+use rustpython_vm::scope::Scope;
+use rustpython_vm::{TryFromObject, VirtualMachine};
+use alloc::format;
+use x86_64::instructions::port::Port;
+use x86_64::structures::port::{PortRead, PortWrite};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -17,7 +22,7 @@ use ps2::{error::ControllerError, flags::ControllerConfigFlags, Controller};
 use vga::writers::{Graphics320x240x256, GraphicsWriter, Text80x25, TextWriter};
 
 #[macro_use]
-mod vga_buffer;
+pub mod vga_buffer;
 mod atomics;
 
 pub fn init_heap() {
@@ -76,21 +81,81 @@ fn anon_object(vm: &VirtualMachine, name: &str) -> rustpython_vm::PyObjectRef {
     py_type.call(args, vm).unwrap()
 }
 
-
 fn install_stdout(vm: &VirtualMachine) {
     let sys = vm.import("sys", 0).unwrap();
 
     let stdout = anon_object(vm, "InternalStdout");
 
-    let writer = vm.new_function("write", move |s: String| {
-        print!("{s}")
-    });
+    let writer = vm.new_function("write", move |s: String| print!("{s}"));
 
     stdout.set_attr("write", writer, vm).unwrap();
 
     sys.set_attr("stdout", stdout.clone(), vm).unwrap();
 }
 
+fn install_lowlevel(vm: &VirtualMachine, scope: Scope) {
+    /// Memory operations
+    fn rw_dtype<T: ToPyObject + TryFromObject + Copy>(vm: &VirtualMachine, scope: Scope) {
+        let tyname = core::any::type_name::<T>();
+        let name = format!("read_{tyname}").leak();
+        let read_byte = vm.new_function(name, move |address: u64| unsafe {
+            *(address as *const T)
+        });
+        scope
+            .globals
+            .set_item(name, read_byte.into(), vm)
+            .unwrap();
+
+        let name = format!("write_{tyname}").leak();
+        let write_byte = vm.new_function(name, move |address: u64, value: T| unsafe {
+            *(address as *mut T) = value;
+        });
+
+        scope
+            .globals
+            .set_item(name, write_byte.into(), vm)
+            .unwrap();
+    }
+
+    /// I/O operations
+    fn rx_dtype<T: ToPyObject + TryFromObject + PortRead + PortWrite>(vm: &VirtualMachine, scope: Scope) {
+        let tyname = core::any::type_name::<T>();
+        let name = format!("send_{tyname}").leak();
+        let send_byte = vm.new_function(name, move |port: u16, value: T| unsafe {
+            Port::new(port).write(value);
+        });
+
+        scope
+            .globals
+            .set_item(name, send_byte.into(), vm)
+            .unwrap();
+
+        let name = format!("recv_{tyname}").leak();
+        let recv_byte = vm.new_function(name, move |port: u16, value: T| unsafe {
+            Port::new(port).write(value);
+        });
+
+        scope
+            .globals
+            .set_item(name, recv_byte.into(), vm)
+            .unwrap();
+
+    }
+
+    rx_dtype::<u8>(vm, scope.clone());
+    rx_dtype::<u16>(vm, scope.clone());
+    rx_dtype::<u32>(vm, scope.clone());
+
+    rw_dtype::<u8>(vm, scope.clone());
+    rw_dtype::<u16>(vm, scope.clone());
+    rw_dtype::<u32>(vm, scope.clone());
+    rw_dtype::<u64>(vm, scope.clone());
+
+    rw_dtype::<i8>(vm, scope.clone());
+    rw_dtype::<i16>(vm, scope.clone());
+    rw_dtype::<i32>(vm, scope.clone());
+    rw_dtype::<i64>(vm, scope.clone());
+}
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
@@ -112,7 +177,10 @@ pub extern "C" fn _start() -> ! {
         pc_keyboard::HandleControl::MapLettersToUnicode,
     );
 
-    interpreter.enter(|vm| install_stdout(vm));
+    interpreter.enter(|vm| {
+        install_stdout(vm);
+        install_lowlevel(vm, scope.clone());
+    });
 
     println!("RustPython v0.4.0");
     print!(">>> ");
@@ -121,7 +189,6 @@ pub extern "C" fn _start() -> ! {
         let source = source.trim();
 
         interpreter.enter(|vm| {
-
             let result = vm
                 .compile(
                     &source,
