@@ -11,7 +11,6 @@ use rustpython_vm::convert::ToPyObject;
 use rustpython_vm::scope::Scope;
 use rustpython_vm::{TryFromObject, VirtualMachine};
 use alloc::format;
-use vga_buffer::enable_cursor;
 use x86_64::instructions::port::Port;
 use x86_64::structures::port::{PortRead, PortWrite};
 
@@ -20,7 +19,6 @@ static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 use core::{cell::RefCell, fmt::Write, panic::PanicInfo};
 use ps2::{error::ControllerError, flags::ControllerConfigFlags, Controller};
-use vga::writers::{Graphics320x240x256, GraphicsWriter, Text80x25, TextWriter};
 
 #[macro_use]
 pub mod vga_buffer;
