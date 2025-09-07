@@ -11,6 +11,7 @@ use rustpython_vm::convert::ToPyObject;
 use rustpython_vm::scope::Scope;
 use rustpython_vm::{TryFromObject, VirtualMachine};
 use alloc::format;
+use vga_buffer::enable_cursor;
 use x86_64::instructions::port::Port;
 use x86_64::structures::port::{PortRead, PortWrite};
 
@@ -57,18 +58,42 @@ fn read_string(
 ) -> String {
     let mut string = String::new();
 
+    vga_buffer::WRITER.lock().update_cursor();
+
     loop {
         while let Ok(byte) = ps2.read_data() {
             if let Ok(Some(event)) = keyboard.add_byte(byte) {
                 if let Some(key) = keyboard.process_keyevent(event.clone()) {
+                    let mut backspace = false;
+
                     if let pc_keyboard::DecodedKey::Unicode(c) = key {
-                        print!("{c}");
-                        if c == '\n' {
-                            return string;
-                        } else {
-                            string.push(c);
+                        match c {
+                            '\n' => {
+                                println!();
+                                return string;
+                            }
+                            '\u{8}' => backspace = true,
+                            c if !c.is_control() => {
+                                print!("{c}");
+                                string.push(c);
+                            }
+                            _ => (),
                         }
                     }
+
+                    if let pc_keyboard::DecodedKey::RawKey(pc_keyboard::KeyCode::Backspace) = key {
+                        backspace = true;
+                    }
+
+                    let mut lck = vga_buffer::WRITER.lock();
+                    if backspace {
+                        if let Some(_) = string.pop() {
+                            lck.column_position = lck.column_position.checked_sub(1).unwrap_or(0);
+                            lck.write_byte(b' ');
+                            lck.column_position = lck.column_position.checked_sub(1).unwrap_or(0);
+                        }
+                    }
+                    lck.update_cursor();
                 }
             }
         }
@@ -182,8 +207,11 @@ pub extern "C" fn _start() -> ! {
         install_lowlevel(vm, scope.clone());
     });
 
+
     println!("RustPython v0.4.0");
     print!(">>> ");
+    vga_buffer::enable_cursor();
+
     loop {
         let source = read_string(&mut ps2, &mut keyboard);
         let source = source.trim();

@@ -73,7 +73,7 @@ struct Buffer {
 /// Wraps lines at `BUFFER_WIDTH`. Supports newline characters and implements the
 /// `core::fmt::Write` trait.
 pub struct Writer {
-    column_position: usize,
+    pub column_position: usize,
     color_code: ColorCode,
     buffer: &'static mut Buffer,
 }
@@ -141,6 +141,10 @@ impl Writer {
             self.buffer.chars[row][col].write(blank);
         }
     }
+
+    pub fn update_cursor(&self) {
+        update_cursor(self.column_position as _, BUFFER_HEIGHT as _);
+    }
 }
 
 impl fmt::Write for Writer {
@@ -173,4 +177,41 @@ pub fn _print(args: fmt::Arguments) {
     interrupts::without_interrupts(|| {
         WRITER.lock().write_fmt(args).unwrap();
     });
+}
+
+/// https://wiki.osdev.org/Text_Mode_Cursor
+pub fn enable_cursor()
+{
+    /*
+    let cursor_start: u8 = 0;
+    let cursor_end: u8 = (BUFFER_HEIGHT - 1) as _;
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
+
+    outb(0x3D4, 0x0B);
+    outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+    */
+}
+
+/// https://wiki.osdev.org/Text_Mode_Cursor
+fn update_cursor(x: u32, y: u32)
+{
+	let pos: u16 = (y * BUFFER_WIDTH as u32 + x).try_into().unwrap();
+
+	outb(0x3D4, 0x0F);
+	outb(0x3D5, (pos & 0xFF) as u8);
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, ((pos >> 8) & 0xFF) as u8);
+}
+
+fn outb(port: u16, value: u8) {
+    unsafe {
+        x86_64::instructions::port::Port::new(port).write(value);
+    }
+}
+
+fn inb(port: u16) -> u8 {
+    unsafe {
+        x86_64::instructions::port::Port::new(port).read()
+    }
 }
