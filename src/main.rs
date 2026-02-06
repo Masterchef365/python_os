@@ -83,15 +83,15 @@ fn read_string(
                         backspace = true;
                     }
 
-                    let mut lck = vga_buffer::WRITER.lock();
                     if backspace {
                         if let Some(_) = string.pop() {
+                            let mut lck = vga_buffer::WRITER.lock();
                             lck.column_position = lck.column_position.checked_sub(1).unwrap_or(0);
                             lck.write_byte(b' ');
                             lck.column_position = lck.column_position.checked_sub(1).unwrap_or(0);
+                            lck.update_cursor();
                         }
                     }
-                    lck.update_cursor();
                 }
             }
         }
