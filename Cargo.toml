@@ -36,6 +36,9 @@ spin = { version = "0.10.0", features = ["portable-atomic"] }
 
 [profile.release]
 debug = true
+opt-level = "s"
+lto = true
+strip = true
 #panic = "abort"
 
 
